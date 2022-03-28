@@ -16,7 +16,7 @@ const handleAuth = (requestHandler) => async (req, res) => {
     throw new Error('unauthorized');
   }
 
-  return await requestHandel(req, res);
+  return await requestHandler(req, res);
 };
 
 module.exports = {
