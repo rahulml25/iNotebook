@@ -1,0 +1,16 @@
+{
+  "name": "inotebook-backend",
+  "version": "1.0.0",
+  "description": "iNotebook - BackEnd",
+  "main": "index.js",
+  "scripts": {
+    "dev": ""
+  },
+  "keywords": [],
+  "author": "rahulml2505",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.3",
+    "mongoose": "^6.2.8"
+  }
+}
