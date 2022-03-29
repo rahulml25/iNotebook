@@ -1,24 +1,39 @@
 const jwt = require('jsonwebtoken');
 
-const handleAuth = (requestHandler) => async (req, res) => {
+const protect = async (req, res, next) => {
+  let token;
   const { authorization } = req.headers;
 
-  try {
-    const token = String(authorization).split(' ');
-    const { type, id } = jwt.verify(token, process.env.SECRET_KEY);
-    if (type !== 'access') throw new Error();
-    const user = await User.findById(id);
-    if (!user) throw new Error();
-    req['user'] = user;
-  } catch (error) {
-    console.error(error);
+  if (
+       authorization &&
+       authorization.startsWith('Bearer')
+     ) {
+
+    try {
+      token = authorization.split(' ')[1];
+
+      const { type, id } = jwt.verify(token, process.env.SECRET_KEY);
+      if (type !== 'access') throw new Error();
+
+      const user = await User.findById(id);
+      if (!user) throw new Error();
+
+      req.user = user;
+      next();
+
+    } catch (error) {
+      console.error(error);
+      res.status(401);
+      throw new Error('unauthorized');
+    }
+  }
+
+  if (!token) {
     res.status(401);
     throw new Error('unauthorized');
   }
-
-  return await requestHandel(req, res);
 };
 
 module.exports = {
-  handleAuth,
+  protect,
 };

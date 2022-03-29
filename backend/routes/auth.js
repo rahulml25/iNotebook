@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { User } = require('../models');
-const { handleAuth } = require('../middlewears/auth');
+const { protect } = require('../middlewears/auth');
 const router = express.Router();
 
 router.route('/')
@@ -10,10 +10,10 @@ router.route('/')
  * GET '/api/auth'
  * Auth required
 */
-.get(handleAuth(async (req, res) => {
+.get(protect, async (req, res) => {
   const user = await User.findById(req.user.id);
   res.status(200).json(user);
-}))
+})
 /***
  * Create User
  * POST '/api/auth'
@@ -42,16 +42,10 @@ router.route('/')
     email,
     password: hashedPassword
   });
-  const id = user.id;
-  user = await User.findById(id, {
-    _id: 0, __v: 0,
-    updatedAt: 0,
-    password: 0,
-    lastlogin: 0,
-  });
 
-  if (user) {
-    res.status(201).json(user);
+  const tokens = await generateTokens(user);
+  if (user && tokens) {
+    res.status(201).json(tokens);
   } else {
     res.status(422);
     throw new Error('invalid cradencials');
@@ -63,13 +57,15 @@ router.route('/')
  * PUT '/api/auth'
  * Auth required
 */
-.put(handleAuth(async (req, res) => {
+.put(protect, async (req, res) => {
   const id = req.user.id;
+
   const userUpdated = await User.findByIdAndUpdate(id, req.body);
   if (!userUpdated) {
     res.status(422);
     throw new Error('invalid user data');
   }
+
   const user = await User.findById(id, {
     _id: 0, __v: 0,
     updatedAt: 0,
@@ -77,15 +73,16 @@ router.route('/')
     lastlogin: 0,
   });
   res.status(200).json(user);
-}))
+})
 /***
  * Delete a User
  * DELETE '/api/auth'
  * Auth required
 */
-.delete(handleAuth((req, res) => {
-
-}));
+.delete(protect, async (req, res) => {
+  await req.user.remove();
+  res.status(200).end();
+});
 
 router.post('/get-token', (req, res) => {
 
