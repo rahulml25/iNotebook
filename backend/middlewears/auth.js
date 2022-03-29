@@ -5,9 +5,9 @@ const protect = async (req, res, next) => {
   const { authorization } = req.headers;
 
   if (
-       authorization &&
-       authorization.startsWith('Bearer')
-     ) {
+    authorization &&
+    authorization.startsWith('Bearer')
+  ) {
 
     try {
       token = authorization.split(' ')[1];

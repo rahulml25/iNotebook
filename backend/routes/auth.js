@@ -43,7 +43,7 @@ router.route('/')
     password: hashedPassword
   });
 
-  const tokens = await generateTokens(user);
+  const tokens = generateTokens(user);
   if (user && tokens) {
     res.status(201).json(tokens);
   } else {
@@ -84,12 +84,53 @@ router.route('/')
   res.status(200).end();
 });
 
-router.post('/get-token', (req, res) => {
+router.post('/get-token', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    res.status(400);
+    throw new Error('please add all fields');
+  }
+
+  const user = await User.findOne({ username });
+  if (!user || !(await bcrypt.compares(password, user.password))) {
+    res.status(400);
+    throw new Error('invalid cradencials');
+  }
+
+  const tokens = generateTokens(user);
+  user.lastlogin = Date.now();
+  user.save();
+  res.status(200).json(tokens);
+});
+
+router.post('/refresh-token', async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    res.status(400);
+    throw new Error('token not provoded');
+  }
+
+  const { id, type } = jwt.verify(refreshToken, process.env.SECRET_KEY);
+  const user = await User.findById(id);
+  if (!id || type !== 'refresh' || !user) {
+    res.status(400);
+    throw new Error('invalid token');
+  }
+
+  const tokens = generateTokens(user);
+  res.status(200).json(tokens);
 
 });
 
-router.post('/refresh-token', (req, res) => {
-
-});
+const generateTokens = (user) => {
+  const { id, username } = user;
+  const tokens = {
+    access: jwt.sign({ id, username, type: 'access' }, { expiresIn: '15d' }),
+    refresh: jwt.sign({ id, username, type: 'refresh' }, { expiresIn: '90d' }),
+  };
+  return tokens;
+};
 
 module.exports = router;
