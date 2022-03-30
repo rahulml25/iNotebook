@@ -70,7 +70,7 @@ asyncHandler(async (req, res) => {
     res.status(201).json(tokens);
   } else {
     res.status(422);
-    throw new Error('invalid cradencials');
+    throw new Error('invalid credencials');
   }
 
 }))
@@ -132,7 +132,7 @@ asyncHandler(async (req, res) => {
   const user = await User.findOne({ username });
   if (!user || !(await bcrypt.compare(password, user.password))) {
     res.status(400);
-    throw new Error('invalid cradencials');
+    throw new Error('invalid credencials');
   }
 
   const tokens = generateTokens(user);
