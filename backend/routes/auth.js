@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.route('/')
 /***
- * Get a User
+ * Get authorized User data
  * GET '/api/auth'
  * Auth required
 */
@@ -25,7 +25,7 @@ router.route('/')
   res.status(200).json(user);
 }))
 /***
- * Create User
+ * Create a new User
  * POST '/api/auth'
  * Auth doesn't require
 */
@@ -75,7 +75,7 @@ asyncHandler(async (req, res) => {
 
 }))
 /***
- * Update a User
+ * Update authorized User data
  * PUT '/api/auth'
  * Auth required
 */
@@ -97,7 +97,7 @@ asyncHandler(async (req, res) => {
   res.status(200).json(user);
 }))
 /***
- * Delete a User
+ * Delete authorized User account
  * DELETE '/api/auth'
  * Auth required
 */
@@ -106,7 +106,12 @@ asyncHandler(async (req, res) => {
   res.status(200).end();
 }));
 
-router.post('/get-token', [
+/***
+ * Get Authorized
+ * POST '/api/autj/get'
+ * Credencials required
+*/
+router.post('/get', [
   validate_body('username').isLength({ min: 3 }),
   validate_body('password').isLength({ min: 6 }),
 ],
@@ -136,7 +141,12 @@ asyncHandler(async (req, res) => {
   res.status(200).json(tokens);
 }));
 
-router.post('/refresh-token',
+/***
+ * Renew Authorization
+ * POST '/api/auth/refresh'
+ * Auth refresher required
+*/
+router.post('/refresh',
 validate_body('refreshToken').isLength({ min: 15 }),
 asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;
