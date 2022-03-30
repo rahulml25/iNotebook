@@ -15,7 +15,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use('/api', require('./routes'));
 
 app.use(errorHandler);
-
 app.listen(port, () => {
   console.log(`backend started at: http://localhost:${port}`)
 });

@@ -1,5 +1,11 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const asyncHandler = require('express-async-handler');
+const {
+  body: validate_body,
+  validationResult: validation_result
+} = require('express-validator');
 const { User } = require('../models');
 const { protect } = require('../middlewears/auth');
 const router = express.Router();
@@ -10,21 +16,37 @@ router.route('/')
  * GET '/api/auth'
  * Auth required
 */
-.get(protect, async (req, res) => {
-  const user = await User.findById(req.user.id);
+.get(protect, asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id, {
+    _id: 0, __v: 0,
+    password: 0,
+    lastlogin: 0,
+  });
   res.status(200).json(user);
-})
+}))
 /***
  * Create User
  * POST '/api/auth'
  * Auth doesn't require
 */
-.post(async (req, res) => {
+.post([
+  validate_body('username').isLength({ min: 3 }),
+  validate_body('name').isLength({ min: 5 }),
+  validate_body('email').isEmail(),
+  validate_body('password').isLength({ min: 6 }),
+],
+asyncHandler(async (req, res) => {
   const { username, name, email, password } = req.body;
 
   if (!username || !name || !email || !password) {
     res.status(400);
     throw new Error('include all fields');
+  }
+
+  const errors = validation_result(req);
+  if (!errors.isEmpty()) {
+    res.status(400);
+    return res.json(errors.array());
   }
 
   const userExists = await User.findOne({ username, email });
@@ -51,13 +73,13 @@ router.route('/')
     throw new Error('invalid cradencials');
   }
 
-})
+}))
 /***
  * Update a User
  * PUT '/api/auth'
  * Auth required
 */
-.put(protect, async (req, res) => {
+.put(protect, asyncHandler(async (req, res) => {
   const id = req.user.id;
 
   const userUpdated = await User.findByIdAndUpdate(id, req.body);
@@ -73,18 +95,22 @@ router.route('/')
     lastlogin: 0,
   });
   res.status(200).json(user);
-})
+}))
 /***
  * Delete a User
  * DELETE '/api/auth'
  * Auth required
 */
-.delete(protect, async (req, res) => {
-  await req.user.remove();
+.delete(protect, asyncHandler(async (req, res) => {
+  req.user.remove();
   res.status(200).end();
-});
+}));
 
-router.post('/get-token', async (req, res) => {
+router.post('/get-token', [
+  validate_body('username').isLength({ min: 3 }),
+  validate_body('password').isLength({ min: 6 }),
+],
+asyncHandler(async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -92,8 +118,14 @@ router.post('/get-token', async (req, res) => {
     throw new Error('please add all fields');
   }
 
+  const errors = validation_result(req);
+  if (!errors.isEmpty()) {
+    res.status(400);
+    return res.json(errors.array());
+  }
+
   const user = await User.findOne({ username });
-  if (!user || !(await bcrypt.compares(password, user.password))) {
+  if (!user || !(await bcrypt.compare(password, user.password))) {
     res.status(400);
     throw new Error('invalid cradencials');
   }
@@ -102,14 +134,22 @@ router.post('/get-token', async (req, res) => {
   user.lastlogin = Date.now();
   user.save();
   res.status(200).json(tokens);
-});
+}));
 
-router.post('/refresh-token', async (req, res) => {
+router.post('/refresh-token',
+validate_body('refreshToken').isLength({ min: 15 }),
+asyncHandler(async (req, res) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
     res.status(400);
     throw new Error('token not provoded');
+  }
+
+  const errors = validation_result(req);
+  if (!errors.isEmpty()) {
+    res.status(400);
+    return res.json(errors.array());
   }
 
   const { id, type } = jwt.verify(refreshToken, process.env.SECRET_KEY);
@@ -122,13 +162,13 @@ router.post('/refresh-token', async (req, res) => {
   const tokens = generateTokens(user);
   res.status(200).json(tokens);
 
-});
+}));
 
 const generateTokens = (user) => {
   const { id, username } = user;
   const tokens = {
-    access: jwt.sign({ id, username, type: 'access' }, { expiresIn: '15d' }),
-    refresh: jwt.sign({ id, username, type: 'refresh' }, { expiresIn: '90d' }),
+    access: jwt.sign({ id, username, type: 'access' }, process.env.SECRET_KEY, { expiresIn: '15d' }),
+    refresh: jwt.sign({ id, username, type: 'refresh' }, process.env.SECRET_KEY, { expiresIn: '90d' }),
   };
   return tokens;
 };
