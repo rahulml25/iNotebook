@@ -46,7 +46,7 @@ asyncHandler(async (req, res) => {
   const errors = validation_result(req);
   if (!errors.isEmpty()) {
     res.status(400);
-    return res.json(errors.array());
+    return res.json({ message: errors.array() });
   }
 
   const userExists = await User.findOne({ username, email });
@@ -121,7 +121,7 @@ asyncHandler(async (req, res) => {
   const errors = validation_result(req);
   if (!errors.isEmpty()) {
     res.status(400);
-    return res.json(errors.array());
+    return res.json({ message: errors.array() });
   }
 
   const user = await User.findOne({ username });
@@ -149,7 +149,7 @@ asyncHandler(async (req, res) => {
   const errors = validation_result(req);
   if (!errors.isEmpty()) {
     res.status(400);
-    return res.json(errors.array());
+    return res.json({ message: errors.array() });
   }
 
   const { id, type } = jwt.verify(refreshToken, process.env.SECRET_KEY);

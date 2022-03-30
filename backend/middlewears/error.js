@@ -7,6 +7,8 @@ const errorHandler = (err, req, res, next) => {
 
   if (process.env.NODE_ENV !== 'production') {
     context['stack'] = err.stack;
+  } else if (statusCode === 500) {
+    context.message = 'internal server error';
   }
 
   res.status(statusCode);

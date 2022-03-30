@@ -20,7 +20,6 @@ router.route('/')
   const notes = await Note.find({ user: req.user.id });
 
   for (const note of notes) {
-    if (note.user.toString() === req.user.id)
     secure_notes.push({
       id: note._id,
       title: note.title,
@@ -51,7 +50,7 @@ asyncHandler(async (req, res) => {
   const errors = validation_result(req);
   if (!errors.isEmpty()) {
     res.status(400);
-    return res.json(errors.array());
+    return res.json({ message: errors.array() });
   }
 
   let note = await Note.create({
@@ -90,7 +89,7 @@ asyncHandler(async (req, res) => {
   const errors = validation_result(req);
   if (!errors.isEmpty()) {
     res.status(400);
-    return res.json(errors.array());
+    return res.json({ message: errors.array() });
   }
 
   const { id } = req.query;

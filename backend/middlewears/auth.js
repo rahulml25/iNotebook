@@ -12,7 +12,7 @@ const protect = asyncHandler(async (req, res, next) => {
   ) {
 
     try {
-      token = authorization.split('Bearer+')[1];
+      token = authorization.split(' ')[1];
 
       const { type, id } = jwt.verify(token, process.env.SECRET_KEY);
       if (type !== 'access') throw new Error();
