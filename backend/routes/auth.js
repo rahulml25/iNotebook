@@ -7,7 +7,7 @@ const {
   validationResult: validation_result
 } = require('express-validator');
 const { User } = require('../models');
-const { protect } = require('../middlewears/auth');
+const { protect } = require('../middlewares/auth');
 const router = express.Router();
 
 router.route('/')
